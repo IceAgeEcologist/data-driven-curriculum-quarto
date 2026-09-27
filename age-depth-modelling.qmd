@@ -35,13 +35,13 @@ pacman::p_load(Bchron, splines, ggplot2, dplyr, neotoma2) # splines comes with b
 
 ## Calibration of radiocarbon dates
 
-A complication in radiocarbon dating is that the initial calculation of a radiocarbon age assumes, by convention, that the amount of radiocarbon in the atmosphere is constant over time (see @bronkramsey2008 for a good overview of how ^14^C dating works). This assumption is untrue, so all radiocarbon age estimates must be post-hoc calibrated using a calibration curve that is based on compiling radiocarbon dates of materials that have precise independent age estimates (e.g., tree rings, corals). Different calibration curves need to be used for the Northern vs. Southern Hemisphere and for the atmosphere vs. oceans, due to different residence times of ^14^C in these different reservoirs. For example, atmospheric radiocarbon that diffuses into the surface oceans usually will reside for centuries before phytoplankton biologically fix it through photosynthesis, which will lead marine ^14^C to be depleted (and ‘too old’) relative to atmospheric ^14^C. Use the wrong calibration curve and your age estimate will be inaccurate! The IntCal series (IntCal04, IntCal09, IntCal13, IntCal20) is the community standard for calibrating radiocarbon dates to calendar years in the **northern** hemisphere [e.g., @reimer2020]. The SHCal series does the same job for the **southern** hemisphere [@hogg2020]. Choosing between them is not optional: use the wrong curve and every age will be biased. The conversion from radiocarbon to calendar years usually further increases the uncertainty of age estimates.
+A complication in radiocarbon dating is that the initial calculation of a radiocarbon age assumes, by convention, that the amount of radiocarbon in the atmosphere is constant over time (see @bronkramsey2008 for a good overview of how ^14^C dating works). This assumption is untrue, so all radiocarbon age estimates must be post-hoc calibrated using a calibration curve that is based on compiling radiocarbon dates of materials that have precise independent age estimates (e.g., tree rings, corals). Different calibration curves need to be used for the Northern vs. Southern Hemisphere and for the atmosphere vs. oceans, due to different residence times of ^14^C in these different reservoirs. For example, atmospheric radiocarbon that diffuses into the surface oceans usually will reside for centuries before phytoplankton biologically fix it through photosynthesis, which will lead marine ^14^C to be depleted (and ‘too old’) relative to atmospheric ^14^C. Use the wrong calibration curve and your age estimate will be inaccurate! The IntCal series (IntCal04, IntCal09, IntCal13, IntCal20) is the community standard for calibrating radiocarbon dates to calendar years in the **Northern** Hemisphere [e.g., @reimer2020]. The SHCal series does the same job for the **Southern** Hemisphere [@hogg2020]. Choosing between them is not optional: use the wrong curve and every age will be biased. The conversion from radiocarbon to calendar years usually further increases the uncertainty of age estimates.
 
 
 We will start by calibrating a single date together with the curve it was calibrated against. In the figure below, the shaded distribution on the y-axis is the radiocarbon age (i.e., the estimate returned by the lab); the shaded distribution on the x-axis is the probability of a given calendar age; and the diagonal wiggly line is the calibration curve itself. Take a minute to get comfortable with interpreting this figure. The important concept to grasp is how the ^14^C distribution on the y-axis intersects with the calibration curve to produce the calibrated distribution on the x-axis. You can use the grid lines to visualise the intersection. See how high probability calendar age regions intersect with the peak of the ^14^C age distribution?
 
 ```{r fig-single-date}
-#| fig-cap: "One radiocarbon date of 11,553 +/- 50 14C BP, calibrated against IntCal20, shown with the calibration curve it was matched to."
+#| fig-cap: "One radiocarbon date of 11,553 +/- 50 14C BP (gray filled distribution on left), calibrated using the IntCal calibration curve (black curvy line with dotted upper and lower bounds. The resulting calibrated age estimate is the gray filled distribution at bottom."
 BchronCalibrate(ages = 11553,
                 ageSds = 50,
                 calCurves = "intcal20") %>%
@@ -53,7 +53,7 @@ Its shape is inherited from the wiggles in the curve, which is why a calibrated 
 be summarised honestly by one number.
 
 ::: {#exr-singlecalibration}
-1. Using the code above, experiment with a few different ages and standard deviations. How does the shape of the calibrated distribution change with different ages and uncertainties?
+1. Using the code above, experiment with at least four different combinations of mean 14C ages and standard deviations. How does the shape of the calibrated distribution change with different ages and uncertainties?
 
 2. Using the package documentation, find all the other possible `calCurves` arguments that `Bchron` accepts.
 :::
@@ -61,7 +61,7 @@ be summarised honestly by one number.
 
 ### Calibrating multiple radiocarbon dates
 
-Here we’ll experiment with calibrating radiocarbon dates, using various calibration curves. Radiocarbon-dated samples come back from the lab with a radiocarbon age and standard deviation, among other information. These two bits of information are used to calibrate the radiocarbon dates to estimated ages. R packages may have useful vignettes (package tutorials) and built-in datasets that provide handy test templates. The following code is modified from the `Bchron` [vignette](https://cran.r-project.org/web/packages/Bchron/vignettes/Bchron.html).
+Here we’ll experiment with calibrating sets of radiocarbon dates, using various calibration curves. This is standard practice in the geosciences, where a single stratigraphic record usually has a series of radiocarbon dates or other geochronogic age constraints.  Each radiocarbon date returned by a radiocarbon dating facility will have a radiocarbon age and standard deviation, among other information. These two bits of information are used to calibrate the radiocarbon dates to estimated ages. R packages may have useful vignettes (package tutorials) and built-in datasets that provide handy test templates. The following code is modified from the `Bchron` [vignette](https://cran.r-project.org/web/packages/Bchron/vignettes/Bchron.html).
 
 ::: {.panel-tabset}
 
@@ -111,7 +111,10 @@ radiocarbon years. Those numbers matter more than they look.
 2. Explain the change in terms of the calibration curve. It may help to plot a single date with
    `includeCal = TRUE`, as in @fig-single-date.
 
-3. Now calibrate a single date of 8050 radiocarbon years with a standard deviation of 30, and
+3. recalibrate one of your dates using the Southern Hemisphere curve (`shcal20`) instead of `intcal20`. How far does the estimated age move,
+   and what would the consequence be of choosing the wrong one?
+   
+4. Now calibrate a single date of 8050 radiocarbon years with a standard deviation of 30, and
    look at what the calibration actually returns. The object holds two vectors of equal
    length, which you can see with `names()`:
 
@@ -127,9 +130,6 @@ radiocarbon years. Those numbers matter more than they look.
    reports and how much probability the largest of them carries, and then decide whether any
    single number would be an honest summary of this date.
 
-4. Finally, recalibrate one of your dates using the Southern Hemisphere curve (`shcal20`) instead of `intcal20`. How far does the estimated age move,
-   and what would the consequence be of choosing the wrong one?
-
 By the end of this exercise you should be able to look at a radiocarbon age, a standard
 deviation and a calibration curve, and say roughly what shape the calendar-age distribution
 will take and how confidently a single number could summarise it.
@@ -137,9 +137,8 @@ will take and how confidently a single number could summarise it.
 
 
 ::: {.callout-note}
-# Median and mean ages
-
-Commonly, only the median age is reported; however, it is good practice to report and consider
+# Median ages, mean ages, and the 95% confidence interval.
+Given the irregularities of the calibrated age distributions, Quaternary scientists have debated whether to report means or medians.  One risk in either case is that the mean or median age might fall in a valley of probability, and so represent a fairly low-probability estimate of the true age.  Standard practice now to report at least one, along with the 95% confidence interval.  In any case, it is good practice to report and consider
 the range of possible ages, especially when exploring synchroneity of events across space.
 Notice how `Bchron` focuses on delivering ranges and densities.
 
@@ -167,7 +166,7 @@ Different kinds of age-depth models exist, each with their own underlying assump
 
 ### Classical age-depth models
 
-Classical models are now out-dated methods [@blaauw2018], but it is useful to understand how they work, because the literature published before the relatively recent development of Bayesian methods relies on them. Let's explore some classical methods of age-depth modelling using one of the datasets included with the `Bchron` package. The data are from a core at Sluggan Moss in County Antrim, Northern Ireland. The published record calls the site Sluggan Bog [@smith1991]; both names refer to the same place, and `Bchron` uses both in its own documentation. The dataset is called via:
+Classical models are now outdated [@blaauw2018], but it is useful to understand how they work, because they are reasonably intuitive approaches and because the literature published before the development of Bayesian methods relies on them. Let's explore some classical methods of age-depth modelling using one of the datasets included with the `Bchron` package. The data are from a core at Sluggan Moss in County Antrim, Northern Ireland. The published record calls the site Sluggan Bog [@smith1991]; both names refer to the same place, and `Bchron` uses both in its own documentation. The dataset is called via:
 
 ```{r slugganData}
 data(Sluggan) # Call the data from Bchron
@@ -184,7 +183,7 @@ carries several ages.
 
 ## Linear interpolation
 
-Linear interpolation predicts ages by simply drawing a line between successive dated samples. This method assumes that there is a constant age-depth relationship between samples, an assumption that is unlikely to be true, especially for cores with fewer dated samples than Sluggan Moss.
+Linear interpolation predicts ages by simply drawing a line between successive dated samples. This method assumes that there is a constant age-depth relationship between samples, an assumption that is unlikely to be true, especially for cores with widely separated samples.
 
 ```{r fig-linear-interp}
 #| fig-cap: "Linear interpolation, drawing straight lines between successive dated levels."
@@ -201,7 +200,7 @@ points(x = Sluggan$ages, y = Sluggan$position, cex = 1.5, col = "red")
 
 ## Linear regression
 
-Linear regression provides a line of best fit through the dated samples. This method assumes a constant age-depth relationship across all samples, also unlikely to be true depending on processes affecting the core during its formation.
+Linear regression provides a line of best fit through the dated samples. This method assumes a constant age-depth relationship across all samples, also unlikely to be true, because most sedimentary archives will experience some changes over time in sedimentation rate, post-depositional compaction, or even erosional loss.
 
 ```{r fig-linear-reg}
 #| fig-cap: "Linear regression, a single straight line fitted through every age control."
@@ -219,7 +218,7 @@ lines(x = predict(mod_ages, data.frame(position = depth_grid)), y = depth_grid)
 
 ## Polynomial regression
 
-Polynomial regression allows a curve to be fit through the data. The amount the curve 'wiggles' depends on the order of the polynomial fit to the data. Polynomial regression runs the risk of over-fitting.
+Polynomial regression allows a curve to be fit through the data. The amount the curve 'wiggles' depends on the order of the polynomial fit to the data. Polynomial regression runs the risk of over-fitting, because e.g. one could fit an 11th-order polynomial to a dataset with 11 dated samples, which would give the model enough flexibility to be fitted to every sample.  Over-fitted models are so closely tuned to the dataset used to calibrate them that they have poor predictive ability when asked to predict something beyond the bounds of the calibration datasets.
 
 ```{r fig-poly-reg}
 #| fig-cap: "A third-order polynomial fitted to the age controls."
@@ -240,6 +239,8 @@ smoothly at the knots. By default the `bs()` function uses a third-degree polyno
 without any knots the fit looks the same as the third-order polynomial above. Note that the
 knots are positions along the predictor, so here they are depths in centimetres.
 
+Splines allow for the model to be locally fitted at various places along the depth series, which can be handy if, e.g. one suspects that the data series is non-stationarity and so can't be well fitted by one universal set of parameters.  But, just as for polynomial regressions, splines can be overfit.
+
 ```{r fig-cubic-spline}
 #| fig-cap: "A cubic spline with knots at 100, 250 and 400 cm depth."
 cubic_ages <- lm(ages ~ splines::bs(position, knots = c(100, 250, 400)),
@@ -258,7 +259,7 @@ Because classical age-depth modelling is rarely used now, we are not going to de
 
 ### Bayesian age-depth models
 
-Now let's see what the latest methods show for the same dataset.
+Now let's see what `Bchron`, a current-generation Bayesian age-depth model, will show for the same dataset.
 
 ::: {.panel-tabset}
 
@@ -316,7 +317,7 @@ A more complete version of the modelling process using `Bchron` can be found in 
 ::: {#exr-downsampling}
 Sluggan Moss is particularly well dated, with 31 age controls. This exercise asks what you lose as dated intervals are removed. For example, a core may only have 5 or 10 dated samples, how would this change your confidence in the age-depth model output, and importantly, your subsequent ecological inferences?
 
-1. Build several down-sampled versions of the `Sluggan` data at different resolutions, for example
+1. Build several (at least three) down-sampled versions of the `Sluggan` data at different resolutions, for example
    by keeping every second control, then every fourth, then only five or six spread through
    the core. Always keep the first and last control, so that every version spans the same
    depth range and none of the models has to extrapolate.
@@ -335,7 +336,7 @@ Sluggan Moss is particularly well dated, with 31 age controls. This exercise ask
 ::: {.callout-tip}
 # Resources
 
-Age-depth modelling is complicated: there are many pitfalls, assumptions, and uncertainties that are often ignored. Recent developments have begun to focus on quantifying uncertainties to understand the reliability of inferences made from the data. Key papers for understanding age-depth modelling include:
+Age-depth modelling carries complications, only some of which we have so far discussed. There are many pitfalls, assumptions, and uncertainties that are often ignored. Recent developments have begun to focus on quantifying uncertainties to understand the reliability of inferences made from the data. Key papers for understanding age-depth modelling include:
 
 - @blaauw2018
 
@@ -347,9 +348,7 @@ Age-depth modelling is complicated: there are many pitfalls, assumptions, and un
 
 ## Accumulation rate
 
-Having a chronology is not the end of it. Because the model gives an age at every depth, it
-also tells us how fast sediment accumulated, which is simply the rate of change of age with
-depth. `Bchron` will return that directly, as a distribution rather than a single line:
+Because the model gives an age at every depth, it also tells us how fast sediment accumulated, which is simply the rate of change of age with depth. `Bchron` will return that directly, as a distribution rather than a single line:
 
 ```{r accRate}
 #| output: false
@@ -370,20 +369,13 @@ ggplot(acc_rate, aes(x = age_grid, y = `50%`, ymax = `75%`, ymin = `25%`)) +
   theme_bw()
 ```
 
-Two things are worth drawing out of @fig-accumulation-rate. Accumulation rate is a derivative
-of the age-depth model, so it inherits all of that model's uncertainty and amplifies it; the
-ribbon here is an interquartile range, not a measurement error. And the rate is not constant,
-which is precisely the assumption that linear interpolation and linear regression were making
-earlier in this chapter. Sediment does not accumulate at a steady pace, and a chronology that
-pretends otherwise will misdate everything between its control points.
+Two things are worth drawing out of @fig-accumulation-rate. Accumulation rate is a derivative of the age-depth model, so it inherits all of that model's uncertainty and amplifies it; the ribbon here is an interquartile range, not measurement error. And the rate is not constant, which is precisely the assumption that linear interpolation and linear regression were making earlier in this chapter. Sediment rarely accumulates at a steady pace, and a chronology that pretends otherwise will misdate everything between its control points.
 
 ## Rebuilding chronologies in Neotoma {#sec-rebuild-chronology}
 
-So far we have used a dataset built into `Bchron`. If you are using data from Neotoma, you will be downloading and working with data that may have their own chronologies associated with them. Many archived chronologies predate the Bayesian methods, or use older calibration curves, so it may be best to rebuild them with the latest methods. Such a chronology is not wrong so much as superseded, and any re-analysis that inherits it inherits its assumptions too. Checking, and often rebuilding, the chronology is a routine and important part of working with archived data.
+So far we have used a dataset built into `Bchron`. If you are using data from Neotoma, you will be downloading and working with data that may have their own chronologies associated with them. Many archived chronologies predate the Bayesian methods, or use older calibration curves, so it may be best to rebuild them with the latest methods. Such a chronology is not wrong so much as superseded, and any re-analysis that inherits it inherits its assumptions too. Checking, and often rebuilding, a site's chronology is a routine and important part of working with archived data.
 
-We obtained data from Neotoma with the `neotoma2` package in @sec-neotoma2, so the downloading
-here will look familiar; the only new part is what we do with the chronological controls once we
-have them. As before we save each download rather than repeating it.
+We obtained data from Neotoma with the `neotoma2` package in @sec-neotoma2, so the downloading here will look familiar; the only new part is what we do with the chronological controls once we have them. As before we save each download rather than repeating it.
 
 
 ```{r devilsChron}
@@ -411,15 +403,12 @@ unique(controls$chronologyid)
 ::: {.callout-note}
 # Multiple chronologies! :mage:
 
-Note that Devil's Lake has three different chronologies, not one. If you take the first that comes back, or assume there is only
-ever one, you may be working with a chronology that its own authors superseded. They are not
-interchangeable: these three contain 11, 13 and 13 controls respectively, and they do not use
-the same kinds of control as each other.
+Note that Devil's Lake has three different chronologies, not one. If you take the first that comes back, or assume there is only ever one, you may be working with a chronology that has been superseded by later updates. The three chronologies are not interchangeable: they contain 11, 13 and 13 controls respectively, and they use different kinds of controls from each other.
 
-Sites may also get revisited, and new dates get added to the database. Always look at what is available, and be able to say why you chose the one you did. Where publications are listed alongside a chronology, use them for reference.
+Sites may also be revisited in the field or lab by the author teams or others, and new dates get added to the database. Always look at what is available, and be able to say why you chose the one you did. Where publications are listed alongside a chronology, use them for reference.
 :::
 
-We will use chronology `9930`. Note what its controls are made of:
+We will use chronology `9930`. Explore its age controls:
 
 ```{r devilsControls}
 controls <- neotoma2::chroncontrols(devils_dl) %>%
@@ -431,14 +420,10 @@ controls[, c("chroncontrolid", "depth", "thickness",
 ```
 
 Only eleven of the thirteen are radiocarbon dates. There is a core top, taken as the year of
-extraction, and there is an *Ambrosia* rise, the pollen marker for EuroAmerican land clearance
-mentioned at the start of this chapter. Both are already calendar ages. They must not be
-calibrated, and this is exactly the distinction the `calCurves` argument exists to make.
+field coring and core retrieval, and there is an *Ambrosia* rise, the pollen marker for EuroAmerican land clearance mentioned at the start of this chapter. Both are already expressed as calendar ages, and so  must not be calibrated.  The `calCurves` argument is used to indicate which date should or shoudn't be calibrated.
 
 The `controls` dataframe holds nearly everything `Bchronology()` needs, but not in the same
-shape as the `Sluggan` data. `Sluggan` has a single standard deviation per date; Neotoma stores
-an older and a younger limit, so the standard deviation is the distance from the age to either
-limit. And there is no calibration curve column at all, so we build one from the control type:
+shape as the `Sluggan` data. `Sluggan` has a single standard deviation per date, while instead Neotoma stores an older and a younger limit, so the standard deviation is the distance from the age to either limit. And there is no calibration curve column at all, so we build one from the control type:
 
 ```{r devilsPrep}
 controls <- controls %>%
@@ -449,10 +434,8 @@ controls <- controls %>%
 controls[, c("depth", "chroncontrolage", "ageSds", "chroncontroltype", "calCurves")]
 ```
 
-Devil's Lake is in Wisconsin, so the radiocarbon dates get `intcal20`. A southern-hemisphere
-core would need `shcal20`, and a marine record `marine20`. Everything that is not a radiocarbon
-date gets `normal`, meaning "treat this age as it stands". Deriving the vector rather than
-typing it out means it stays correct if the chronology changes.
+Devil's Lake is in Wisconsin, so the radiocarbon dates get `intcal20`. A Southern Hemisphere
+core would need `shcal20`, and a marine record `marine20`. Everything that is not a radiocarbon date gets `normal`, meaning "treat this age as it stands". Deriving the vector directly from Neotoma sources rather than typing it out means it stays correct if the chronology stored in Neotoma changes.
 
 ```{r devilsRebuild}
 #| output: false
@@ -474,8 +457,7 @@ plot(newChron)
 ```
 
 Look closely at the two controls at 457 and 474 cm. The deeper of the two is reported as the
-*younger*, 8590 against 8640 radiocarbon years, which cannot be true of undisturbed sediment.
-The outlier probabilities pick this up:
+*younger*, 8590 against 8640 radiocarbon years, which cannot be true of undisturbed sediment.  (i.e. it violates Steno's Law of Superposition, which states that, in a stratigraphic column deeper sediments will have been deposited prior to (and hence are younger than) shallower sediments.). The outlier probabilities pick this up:
 
 ```{r devilsOutliers}
 summary(newChron, type = "outliers")
@@ -483,12 +465,10 @@ summary(newChron, type = "outliers")
 
 Those two dates carry the highest outlier probabilities of the thirteen, several times the
 value of any other. They are still low in absolute terms, because the two ages agree well
-within their uncertainties, but the model has noticed. This is the advantage of a method that
-carries uncertainty explicitly: it can register that something is odd without being derailed
-by it, where a classical fit would simply have drawn a line through the inversion.
+within their uncertainties, but the model has noticed. This is the advantage of a method that carries uncertainty explicitly: it can register that something is odd without being derailed by it, where a classical fit would simply have drawn a line through the inversion. (And, the connect-the-dots linear interpolation would have tried to reverse time between those two samples!)
 
 
-We have downloaded a range of sites from the northern and southern hemispheres, for you to use in the following exercise. If you prefer, you can also choose a site of your own using `neotoma2` or [Neotoma Explorer](https://apps.neotomadb.org/explorer/).
+We have downloaded a range of sites from the Northern and Southern Hemispheres, for you to use in the following exercise. If you prefer, you can also choose a site of your own using `neotoma2` or [Neotoma Explorer](https://apps.neotomadb.org/explorer/).
 
 ```{r someSites}
 if (!file.exists("./data/some_sites.rds")) {
@@ -513,25 +493,18 @@ right.
 2. List the available chronologies and choose one, saying why.
 
 3. Work out what kind each chronological control is, and build a `calCurves` vector
-   accordingly. Remember that the hemisphere decides between `intcal20` and `shcal20`,
+   accordingly. Remember that the site's hemisphere decides between `intcal20` and `shcal20`, 
    and that anything already expressed as a calendar age needs `normal`.
 
 4. Fit the model and plot it. Compare the uncertainty with the published chronology if the
    original paper is available.
 
-Not every site will cooperate. If `Bchronology()` refuses to run, read the error: it is usually
-telling you that a control is missing something it needs. Deciding what to do about a control
-with no reported uncertainty is part of the work, not a distraction from it.
+Not every site will cooperate. If `Bchronology()` refuses to run, read the error: it is usually telling you that a control is missing something needed by the model. Deciding what to do about a control with no reported uncertainty is part of the work, not a distraction from it.
 :::
 
 ## Conclusion
 
-We have calibrated radiocarbon dates and seen how much uncertainty that conversion adds, fitted
-the four classical age-depth models and seen where each of them misleads, and built a Bayesian
-chronology that carries its uncertainty through to every predicted age. Chronologies underpin
-inferences made from statistical analyses, and are thus a crucial part of the analytical process.
-Age-depth models are often used to determine the timing of biological events, and accumulation rates
-affect how many years of ecological productivity are contained within a given sample (known as time averaging).
+We have calibrated radiocarbon dates and seen how much uncertainty that conversion adds, fitted the four classical age-depth models and seen where each of them misleads, and built a Bayesian chronology that carries its uncertainty through to every predicted age. Chronologies underpin inferences made from statistical analyses, and are thus a crucial part of the analytical process. Age-depth models are often used to determine the timing of biological events, and accumulation rates affect how many years of ecological productivity are contained within a given sample (known as time averaging).
 
 The exercises are linked below if you need to revisit them:
 
