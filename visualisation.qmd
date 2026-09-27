@@ -6,7 +6,11 @@ author: Quinn Asena
 
 ## Background {#sec-visualisationbackground}
 
-One of the most common methods of plotting palaeoecological data (such as pollen, but often including diatoms, isotopes, and other palaeoecological data) is to create stratigraphic plots. Palaeodata are regularly visualised with age (usually the output of an age-depth model) on the y-axis, with the youngest age at the top, to mirror a core-type sample. Each taxon is plotted in sequence horizontally, in order of abundance. Taxonomic data, such as pollen or diatoms, are also usually converted to relative abundances before plotting. While the relative abundances do help visualise the proportion of each taxon through time (and absolute abundances are unavailable), this also means that the plots can be misleading. For example, if all taxa were to decline equally, then the figure would not change at all! Or the rise of a taxon could be due to the decline of others. Of course, this is not the only method of visualising palaeoecological data, and other layouts can be equally good; however, we will demonstrate the most common convention in this chapter. We will do so using the `ggplot2` package and the `rioja` package.
+One of the most common methods of plotting palaeoecological data (such as pollen, but often including diatoms, isotopes, and other palaeoecological data) is to create stratigraphic plots. (For pollen data, these stratigraphic plots are usually called *pollen diagrams*) In these plots, palaeodata are usually visualised with age on the y-axis, with the youngest age at the top, to mirror a core-type sample. These ages are usually inferred from an age-depth model, as described in @sec-age-depth. Each taxon usually gets its own plot, with the x-axis indicating abundance, presence, or other unit. 
+
+Taxonomic data, such as pollen or diatoms, are usually converted to relative abundances before plotting. While the relative abundances do help visualise the proportion of each taxon through time (and absolute abundances are unavailable), this also means that the plots can be misleading. For example, if all taxa were to decline equally, then the figure would not change at all! Or the apparent rise of a taxon could be due to the decline of others. 
+
+Of course, stratigraphic plots are not the only method of visualising palaeoecological data, and other layouts can be equally good; however, we will demonstrate the most common convention in this chapter. We will do so using the `ggplot2` package and the `rioja` package.
 
 
 ## Getting started
@@ -69,7 +73,7 @@ devils_harm_prop <- devils_samples %>%
 
 ## Stratigraphic diagrams
 
-In most publication-ready figures, you would plot as many taxa and functional groups as possible. For this demonstration we will plot the 6 most abundant species so that they fit more easily on the rendered page. We will do this simply by summing the taxa through time and picking the top 6:
+In most publication-ready figures, you would plot as many taxa and functional groups as possible. For this demonstration we will plot the six most abundant species so that they fit more easily on the rendered page. We will do this simply by summing the taxa through time and picking the top six:
 
 ```{r TopTaxa}
 devils_top_taxa <- devils_harm_prop %>%
@@ -78,7 +82,7 @@ devils_top_taxa <- devils_harm_prop %>%
   arrange(desc(total))
 ```
 
-Of course, this is an over-simplification since ecologically important does not necessarily also mean most abundant! It serves the purpose of having something to plot.
+Of course, most abundant does not necessarily also mean the most ecologically important! This is particularly true for pollen data, because some plant species are more prolific producers and broadcasters of pollen than others, so pollen abundance is almost always a biased signal of ecological abundance.  We use this simple rule to show how plotting works.
 
 ```{r visFocalTaxa}
 focal <- devils_top_taxa$variablename[1:6]
@@ -95,7 +99,7 @@ Let's start with the simplest thing that works: proportion against age, one pane
 the oldest sample sits at the bottom. `facet_wrap()` splits each taxon (`variablename`) into one panel per taxon. We will incrementally build up from a basic plot to a fleshed-out example with correct details. If you are unfamiliar with ggplot, try commenting out or removing lines systematically, rerunning the code each time to see the difference.
 
 ```{r fig-strat-first}
-#| fig-cap: "A first pollen diagram for Devil's Lake. Incomplete, but something to build on."
+#| fig-cap: "A six-taxon pollen diagram for Devil's Lake. Incomplete, but something to build on."
 #| fig-height: 5
 ggplot(devils_focal, aes(x = age, y = prop)) +
   geom_area(fill = "grey25") +
@@ -107,11 +111,10 @@ ggplot(devils_focal, aes(x = age, y = prop)) +
   theme_minimal()
 ```
 
-Now let's start improving on this base plot @fig-strat-first! Using a filled area is common; however, the fill implies a continuous record and the core was sampled at discrete intervals. Everything between two samples is drawn by the plotting function, not measured. Adding a segment
-at each sampled age shows where the observations actually are. The density of observations through time is very important, and it is a common mistake not to include them in stratigraphic plots! Currently, the panels are also in alphabetical order by default. Ordering by abundance is tidier and conveys relative abundance along the horizontal alignment of panels. To do this `ggplot2` likes to have the taxa as factor data, so let's convert the taxa names to factor data:
+Now let's start improving on the starting plot shown in @fig-strat-first! Using a filled area is common; however, the fill implies a continuous record and the core was sampled at discrete intervals. Everything between two samples is drawn by the plotting function, not measured. Adding a segment at each sampled age shows where the observations actually are. The density of observations through time is very important, and it is a common mistake not to include them in stratigraphic plots! Currently, the panels are also in alphabetical order by default. Ordering by abundance is tidier and conveys relative abundance along the horizontal alignment of panels. To do this `ggplot2` likes to have the taxa as factor data (a data type in which only a limited set of categories are possible), so let's convert the taxa names to factor data:
 
 ```{r visFactorOrder}
-# convert taxa to factor, see <fct> now appears in the
+# convert taxa to factor, note that <fct> now appears in the
 # variablename column if you print the tibble?
 devils_focal <- devils_focal %>%
   mutate(variablename = factor(variablename, levels = focal))
@@ -140,7 +143,7 @@ Now we're getting somewhere!
 
 #### Formatting taxon names
 
-By convention genus and species names are italic, the genus is capitalised and the species is not (e.g., *Quercus alba*). The `marquee` package renders markdown inside `ggplot2` theme elements, so a label is written the way it would be written using [markdown syntax](https://www.markdownguide.org/basic-syntax/#emphasis). Markdown is a featherweight plain text format that is super easy to use and commonplace in programming. There are many, many ways of achieving the same aim in `ggplot2`; I find markdown elements the simplest.
+By convention genus and species names are italic, the genus is capitalised and the species is not (e.g., *Quercus alba*). The `marquee` package renders markdown inside `ggplot2` theme elements, so a label is written the way it would be written using [markdown syntax](https://www.markdownguide.org/basic-syntax/#emphasis). Markdown is a featherweight plain text format that is super easy to use and commonplace in programming. There are many, many ways of achieving the same aim in `ggplot2`; we find markdown elements the simplest.
 
 Let's create some labels for `ggplot2`. Since there are only 6 taxa, we can easily enough create matching pairs manually:
 
@@ -199,11 +202,11 @@ Notice that we also included some optional cosmetic changes like percent on the 
 :::
 
 ::: {.callout-note}
-# Assumptions of stratigraphic plots of taxa :mage:
+# Things to critically consider when viewing these stratigraphic plots of taxa :mage:
 
-- When plotting relative abundances, that the taxa are _not_ independent of each other. As noted in @sec-visualisationbackground, a perceived increase in one taxon may be driven by the decrease in other species.
+- When plotting relative abundances, remember that the taxa are _not_ independent of each other. As noted in @sec-visualisationbackground, a perceived increase in one taxon may be driven by the decrease in other species.
 
-- Chronological uncertainties are not visually accounted for. @sec-age-depth covers how important the age-depth uncertainties can be and that only considering the median density can lead to incorrect conclusions. Common errors in palaeoecology are to: (i) infer the timing of ecological events from stratigraphic diagrams that do not account for chronological uncertainty; and (ii) plot data from multiple cores against a single chronology to infer the synchroneity of events across space without due consideration of the compounded chronological uncertainties. Although these considerations are important to visualisation and interpretation, we will not attempt to tackle such big issues in this chapter. If you are interested, here are a few papers:
+- Chronological uncertainties are not visually accounted for in these plots. @sec-age-depth reviews the critical importance of age-depth uncertainties and how only considering the median age estimate can lead to incorrect conclusions. Common errors in palaeoecology are to: (i) infer the timing of ecological events from stratigraphic diagrams that do not account for chronological uncertainty; and (ii) plot data from multiple cores against a single chronology to infer the synchroneity of events across space without due consideration of the compounded chronological uncertainties. Although these considerations are deeply important to interpretation, they are beyond scope for this chapter's introduction to stratigraphic diagrams. If you are interested, here are a few papers:
   - @blois2011
   - @parnell2008
   - @blaauw2007
@@ -213,13 +216,11 @@ Notice that we also included some optional cosmetic changes like percent on the 
 
 ::: {#exr-downsample}
 
-Take Devil's Lake, or another site of your choosing.
+For Devil's Lake, or another site of your choosing:
 
-1. Rebuild the chronology with `Bchron`, following @sec-age-depth, three times: once with the complete chronological control data, which is your reference point, and twice more with the control data artificially downsampled by removing rows. Keep the first and last control in each downsampled version.
+1. Artificially downsample the pollen data three times: once with all samples (i.e., no downsampling) which is your reference point, and twice more with the control data artificially downsampled by removing rows.  Remove 20% of rows in one example and 50% the other. Your call about whether to remove rows evenly or irregularly. Keep the first and last sample in each downsampled version.
 
-2. Artificially downsample the pollen data twice, again by removing rows. The complete dataset is your reference point here too.
-
-3. You now have three chronologies and three pollen datasets. Plot combinations of the two to see the effect of reduced temporal resolution in the chronological controls and in the pollen separately.
+2. Create stratigraphic plots for these three datasets to see the effect of reduced sample resolution.  Discuss in a few sentences at least two instances where reductions in temporal resolution might affect the ecological interpretation.
 :::
 
 
@@ -300,7 +301,7 @@ You will want to save your figures to disk after they have been created. The gra
 
 ## Taxa across space and time
 
-The above sections cover creating a stratigraphic diagram for a single site. Don't forget that the data downloaded from `neotoma2` contain many, many (many!) variables that can be used for data exploration. Let's have a look at a couple of other exploratory figures we could make from the multi-site object covering all of the state of Michigan downloaded in @sec-neotoma2. One site gives a history. Many sites give a geography as well. For demonstration purposes, we will load the data, filter for only records containing pollen data, and do a quick-and-dirty harmonisation for pine species:
+The above sections cover creating a stratigraphic diagram for a single site. Don't forget that the data downloaded from `neotoma2` contain many, many (many!) variables that can be used for data exploration. Let's have a look at a couple of other exploratory figures we could make from the multi-site object covering all of the state of Michigan downloaded in @sec-neotoma2. One site gives a history. Many sites give a geography as well. For demonstration purposes, we will load the data, filter for only records containing pollen data, and do a quick harmonisation for pine species:
 
 ```{r visMichSamples}
 mich_dl <- readRDS("./data/mich_dl.rds")
@@ -335,17 +336,13 @@ ggplot(mich_taxa, aes(x = sites, y = samples)) +
 Most taxa are rare: nearly half of the taxa (`r sum(mich_taxa$sites == 1)`) occur at a single site, and only a handful (`r sum(mich_taxa$sites == max(mich_taxa$sites))`) occur at all sites. This demonstrates a core ecological concept: that common taxa are rare! 
 
 
-In the stratigraphic plot demonstration we picked the top 6 species by count (purely for demonstration). @fig-mich-rarity demonstrates why. Ecologically, we would not want to throw out rare species! Such simplicity does not take into account important considerations such as functional importance, that total abundance by count may be skewed by taxa that produce a lot of pollen, and total abundance does not reflect compositional change over time.
+In the stratigraphic plot demonstration we picked the top six species by count. @fig-mich-rarity demonstrates why these simplified representations should be used with caution. When understanding ecological processes, we rarely would want to throw out 214 of 220 species from our analyses! The simplified rule helps us see clear patterns in a few abundant taxa but does not account for important considerations such as functional importance, that total abundance by count may be skewed by taxa that produce a lot of pollen, and overall changes in biodiversity. 
 
-<!-- NOTE (Claude): the shape of @fig-mich-rarity is the standard occupancy-abundance
-     relationship, and the tail at sites = 1 is where identification effort and analyst
-     differences live as much as ecology. Worth a sentence if you want it. -->
+On the other hand, the rare taxa are often also the 'noisy' taxa - they are the taxa characterized by low counts (which makes statistical uncertainties higher) and where analyst identifications are most likely to differ.  So, there is no simple rule of what to show or not; these decisions are always governed by the questions/hypotheses being pursued and the analyst's judgment.
 
 ### How much data does each site have?
 
-Palaeoecological datasets differ enormously in how many samples were taken and what period they cover.
-For any multi-site comparison it is important to know the sampling intensity and temporal coverage.
-The following code loads up the samples data from the Michigan sites, deals with the duplicate name ("Green lake"), and creates a summary object `site_cover` that checks how many samples a site has, and whether the dataset covers the whole of the Holocene period.
+Palaeoecological datasets differ enormously in how many samples were taken and what period they cover. For any multi-site comparison it is important to know the sampling intensity and temporal coverage. The following code loads up the samples data from the Michigan sites, deals with the duplicate name ("Green lake"), and creates a summary object `site_cover` that checks how many samples a site has, and whether the dataset covers the whole of the Holocene period.
 
 ```{r visMichCoverage}
 allSamp <- samples(mich_dl) %>%
@@ -358,9 +355,9 @@ allSamp <- samples(mich_dl) %>%
 
 dplyr::n_distinct(allSamp$siteid)
 
-# two Michigan sites are both called "Green Lake", so the name alone is not a key
-# For analyses, use siteid (not sitename), which is unique per site
-# Below we do a little tidying so that the figure displays the site name
+# two Michigan sites are both called "Green Lake", so the name alone is not a
+# unique identifier For analyses, use siteid (not sitename), which is unique.
+# Below we do a little tidying, so that the figure displays the site name
 # alongside the ID for the common case where two sites have the same name!
 mich_samp <- allSamp %>%
   distinct(siteid, sitename, sampleid, age, age_range_young, age_range_old) %>%
@@ -429,7 +426,7 @@ cat("All Michigan sites: ", dplyr::n_distinct(allSamp$siteid), "\n",
     "Total Holocene samples ", dplyr::n_distinct(mich_holo$sampleid), "\n")
 ```
 
-This demonstrates a common challenge in palaeoecology: curation is expensive! Filtering by temporal extent alone removes more than half the data. If we were to go on to filter by additional criteria such as available covariates, chronological controls (i.e., a minimum number of radio carbon dates), and sampling intensity, we would lose many more sites. 
+This demonstrates a common challenge in palaeoecology: stringent curation can lead to high data losses! Filtering by temporal extent alone removes more than half the data. If we were to go on to filter by additional criteria such as available covariates, chronological controls (i.e., a minimum number of radio carbon dates), and sampling intensity, we would lose more sites. 
 
 ::: {.callout-warning}
 # Oh no! :scream:
@@ -451,22 +448,20 @@ mich_holo %>%
 
 Pinhook Bog advertises a record reaching past 38,000 years, while the pollen we kept stops at
 about 22,000. Note also that the difference runs both ways: Wintergreen Lake's samples reach
-*older* than its metadata claims.
+*older* than its metadata claims.  
 :::
 
 
 ### Comparing multisite data
 
-Because each core has its own sampling intensity and age-depth model, observations from two or more sites will not align in time. A common approach to get around this issue is to bin data at a given resolution so that samples across datasets occur within the same bin. This is quite a dangerous approach given chronological uncertainties and the effects of different bin widths. Narrow bins respect the sampling resolution but leave gaps; wide bins fill the gaps
-by averaging over more time than a sample represents. Neither respects chronological uncertainty.
-Two hundred years is near the fine end for this dataset. Sometimes the chronological uncertainty around a sample is larger than the bin itself! Let's explore visualising the number of samples in binned data; we won't attempt to tackle chronological uncertainties here. The following code creates 200-year bins and summarises the data by the number of samples in each bin:
+Because each core has its own sampling intensity and age-depth model, observations from two or more sites rarely will align in time. A common approach to get around this issue is to bin data at a given resolution so that samples across datasets occur within the same bin. How finely/coarsely to bin data is a non-trivial question, given chronological uncertainties and the effects of different bin widths. Narrow bins respect the sampling resolution but leave gaps; wide bins fill the gaps by averaging over more time than a sample represents. Neither respects chronological uncertainty. Two hundred years is near the fine end for this dataset. Sometimes the chronological uncertainty around a sample is larger than the bin itself! Let's explore visualising the number of samples in binned data; we won't attempt to tackle chronological uncertainties here. The following code creates 200-year bins and summarises the data by the number of samples in each bin:
 
 ```{r visMichBins}
 per_site_bin <- mich_holo %>%
   dplyr::filter(age >= 0, age < 11700) %>%
   distinct(siteid, sitename, sampleid, age) %>%
   mutate(age_bin = round(age / 200) * 200) %>%
-  count(age_bin, siteid, sitename, name = "n_samples")
+  dplyr::count(age_bin, siteid, sitename, name = "n_samples")
 
 ```
 
@@ -492,7 +487,7 @@ per_site_bin %>%
 
 ### Where are taxa present?
 
-Bearing in mind that we have glossed over the quality of each site's chronology, it is still worth looking at another plot to demonstrate how data from Neotoma can be explored. The following code once again filters for the most abundant six taxa and records that cover the Holocene, follows the same binning procedure shown above, and creates a table of how many sites record each taxon in each bin.
+Now let's build another plot to demonstrate how data from Neotoma can be explored, while bearing in mind that we have glossed over the quality of site chronologies. The following code once again filters for the most abundant six taxa and Michigan records that cover the Holocene, follows the same binning procedure shown above, and creates a table of how many sites record each taxon in each bin.
 
 ```{r visPresence}
 #| output: false
@@ -527,7 +522,7 @@ presence %>%
 Now let's make a plot:
 
 ```{r fig-mich-presence}
-#| fig-cap: "Proportion of the 13 curated Michigan sites recording each taxon through time, in 200 year bins, with a binomial GAM smooth weighted by the number of sites contributing to each bin. Four of the six taxa sit at or near 100% throughout, which is the problem described below."
+#| fig-cap: "Proportion of the selected Michigan sites that record each taxon through time, in 200 year bins, with a binomial GAM smooth weighted by the number of sites contributing to each bin. Four of the six taxa sit at or near 100% throughout, which is what happens when you only select the most common taxa."
 #| fig-height: 4.5
 #| warning: false
 
@@ -544,28 +539,28 @@ ggplot(presence, aes(x = age_bin, y = proportion, weight = n_sites_total)) +
   theme(strip.text = element_marquee())
 ```
 
-Despite making several assumptions along the way about chronological controls and bin widths (it is advisable to experiment with several different bin widths), some patterns do emerge!
-*Quercus* and *Ulmus* are present at every site in every one of the 56 age bins, and *Pinus* in 48 of
-them. The smoother is purely a visual guide, not intended for statistical analyses. Presence is only informative for a taxon that is sometimes absent, which here is *Picea*, which ranges from 9% to 100% of sites, and *Fraxinus*, which never exceeds half of them.
+Despite making several assumptions along the way about chronological controls and bin widths (it is advisable to experiment with several different bin widths), patterns do emerge! *Picea*, a cold-tolerant genus, is most common early on, then declines; a signal of regional and global warming during the early Holocene. *Betula* shows a more modest version of the same signal. 
+*Quercus* and *Ulmus* are present at every site in every one of the 56 age bins, and *Pinus* in 48 of them. The smoother is purely a visual guide, not intended for statistical analyses. Presence is only informative for a taxon that is sometimes absent, which here is *Picea*, which ranges from 9% to 100% of sites, and *Fraxinus*, which never exceeds half of them.
 
 
 ::: {.callout-note}
 # Always remember ecological knowledge! :mage:
 
-_Always_ remember the ecology of a region. It is one thing to play with the numbers from a database, but we could be missing important ecological dynamics. The above example visualises data across Michigan as one, so this approach could be missing those important underlying dynamics. Michigan is split by a climatic tension zone. How would the results change if that knowledge, which is not contained in the downloads, were included?
+_Always_ remember the ecology of a region. It is one thing to play with the numbers from a database, but we could be missing important ecological dynamics. The above example visualises data across Michigan as one, so this approach could be missing those important underlying dynamics. For example, Michigan ecosystems today have various levels of spatial heterogeneity, much of which can be traced to spatial gradients in temperature, lake-effect snow, and soil. Similarly, human population densities have generally increased over the last 10,000 years, along with cultural shifts in technologies and plant domestication.  How might our interpretations change change if that knowledge were included?
 
 :::
 
 
 ::: {#exr-youchoose}
-We have worked through several examples of how data from Neotoma can be manipulated and reshaped to produce data visualisations. This exercise is an open-ended one: either take one of the visualisations above, improve it, and discuss the shortcomings and what issues you addressed, _or_ come up with a visualisation of your own and discuss what you did and why.
+We have worked through several examples of how data from Neotoma can be manipulated and reshaped to produce data visualisations. This exercise is an open-ended one: make a visualization of your own, that is meaningfully different from the ones shown above.  Either take one of the visualisations above, improve it, and discuss the shortcomings and what issues you addressed, _or_ come up with a visualisation of your own and discuss what you did and why.
 
-There are still many possible visualisations. If you need some inspiration, consider:
+There are still many possible visualisations. Additional possibilities:
 
+- Stratigraphic plots of community-level metrics such as species richness or evenness
 - Visualising chronological uncertainty
-- Spatial change in taxa (e.g., longitude against abundance)
-- Species richness against counting effort
 - Some sites include the name of the analyst under `sampleanalyst`. Which sites have multiple analysts, and does anything change in the data depending on who the analyst was?
+- Scatter plots of taxon abundances relative to each other
+- Spatial changes in taxa (e.g., maps of abundances for different time periods, longitude against abundance)
 
 :::
 
