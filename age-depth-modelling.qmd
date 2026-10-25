@@ -53,9 +53,11 @@ Its shape is inherited from the wiggles in the curve, which is why a calibrated 
 be summarised honestly by one number.
 
 ::: {#exr-singlecalibration}
-1. Using the code above, experiment with at least four different combinations of mean 14C ages and standard deviations. How does the shape of the calibrated distribution change with different ages and uncertainties?
+1. Using the code above, experiment with at least four different combinations of mean 14C ages and standard deviations. Provide an output table with your four inputted mean 14C and standard deviations and the resulting four mean calibrated ages and 95% confidence intervals.
 
-2. Using the package documentation, find all the other possible `calCurves` arguments that `Bchron` accepts.
+2. How does the shape of the calibrated distribution change with different ages and uncertainties?
+
+3. Using the package documentation, find all the other possible `calCurves` arguments that `Bchron` accepts.
 :::
 
 
@@ -138,7 +140,7 @@ will take and how confidently a single number could summarise it.
 
 ::: {.callout-note}
 # Median ages, mean ages, and the 95% confidence interval.
-Given the irregularities of the calibrated age distributions, Quaternary scientists have debated whether to report means or medians.  One risk in either case is that the mean or median age might fall in a valley of probability, and so represent a fairly low-probability estimate of the true age.  Standard practice now to report at least one, along with the 95% confidence interval.  In any case, it is good practice to report and consider
+Given the irregularities of the calibrated age distributions, Quaternary scientists have debated whether to report means or medians.  One risk in either case is that the mean or median age might fall in a valley of probability, and so represent a fairly low-probability estimate of the true age.  Standard practice now is to report at least one, along with the 95% confidence interval.  In any case, it is good practice to report and consider
 the range of possible ages, especially when exploring synchroneity of events across space.
 Notice how `Bchron` focuses on delivering ranges and densities.
 
@@ -420,7 +422,7 @@ controls[, c("chroncontrolid", "depth", "thickness",
 ```
 
 Only eleven of the thirteen are radiocarbon dates. There is a core top, taken as the year of
-field coring and core retrieval, and there is an *Ambrosia* rise, the pollen marker for EuroAmerican land clearance mentioned at the start of this chapter. Both are already expressed as calendar ages, and so  must not be calibrated.  The `calCurves` argument is used to indicate which date should or shoudn't be calibrated.
+field coring and core retrieval, and there is an *Ambrosia* rise, the pollen marker for EuroAmerican land clearance mentioned at the start of this chapter. Both are already expressed as calendar ages, and so  must not be calibrated.  The `calCurves` argument is used to indicate which date should or shouldn't be calibrated.
 
 The `controls` dataframe holds nearly everything `Bchronology()` needs, but not in the same
 shape as the `Sluggan` data. `Sluggan` has a single standard deviation per date, while instead Neotoma stores an older and a younger limit, so the standard deviation is the distance from the age to either limit. And there is no calibration curve column at all, so we build one from the control type:
@@ -457,7 +459,7 @@ plot(newChron)
 ```
 
 Look closely at the two controls at 457 and 474 cm. The deeper of the two is reported as the
-*younger*, 8590 against 8640 radiocarbon years, which cannot be true of undisturbed sediment.  (i.e. it violates Steno's Law of Superposition, which states that, in a stratigraphic column deeper sediments will have been deposited prior to (and hence are younger than) shallower sediments.). The outlier probabilities pick this up:
+*younger*, 8590 against 8640 radiocarbon years, which cannot be true of undisturbed sediment.  (i.e. it violates Steno's Law of Superposition, which states that, in a stratigraphic column deeper sediments will have been deposited prior to (and hence are older than) shallower sediments.). The outlier probabilities pick this up:
 
 ```{r devilsOutliers}
 summary(newChron, type = "outliers")
@@ -504,7 +506,7 @@ Not every site will cooperate. If `Bchronology()` refuses to run, read the error
 
 ## Conclusion
 
-We have calibrated radiocarbon dates and seen how much uncertainty that conversion adds, fitted the four classical age-depth models and seen where each of them misleads, and built a Bayesian chronology that carries its uncertainty through to every predicted age. Chronologies underpin inferences made from statistical analyses, and are thus a crucial part of the analytical process. Age-depth models are often used to determine the timing of biological events, and accumulation rates affect how many years of ecological productivity are contained within a given sample (known as time averaging).
+We have calibrated radiocarbon dates and seen how much uncertainty that conversion adds, fitted the four classical age-depth models and seen where each of them misleads, and built a Bayesian chronology that carries its uncertainty through to every predicted age. Chronologies underpin inferences made from statistical analyses, and are thus a crucial part of the analytical process. Age-depth models are often used to determine the timing of biological events, and accumulation rates affect how many years of an ecological signal are contained within a given sample (known as time averaging).
 
 The exercises are linked below if you need to revisit them:
 

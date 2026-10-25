@@ -27,7 +27,7 @@ The MAT follows four basic steps:
 
 Note that we are taking a detour into palaeoclimatology for two reasons. First, because palaeoclimatic reconstructions are still a primary use for fossil pollen and other micropalaeontological data. Second, because the MAT and the `analogue` package, as a dissimilarity-based approach, also lets us explore the novelty of past communities, perhaps of more interest to palaeoecologists than inferred palaeoclimates!
 
-The following section, @sec-datawrangle, takes you through some pretty advanced data wrangling required to match species names between the datasets we will use. However, if you prefer to skip all the wrangling and jump directly to the analyses in @sec-modernanalogue, the data have been saved post-wrangling and can be loaded into R directly. Run the 'Jump point' code below and portal to @sec-modernanalogue.
+@sec-datawrangle takes you through some pretty advanced data wrangling required to match species names between the datasets we will use. We recommend that you read this section, because it works through important questions about taxonomic names and how to harmonize them among different datasets. However, if you prefer to skip all the wrangling and jump directly to the analyses in @sec-modernanalogue, the data have been saved post-wrangling and can be loaded into R directly. Run the 'Jump point' code below and portal to @sec-modernanalogue.
 
 ::: {.callout-tip}
 # Jump point
@@ -68,7 +68,7 @@ pacman::p_load(dplyr, tidyr, readr, tibble, stringr, neotoma2, analogue)
 
 ## Data wrangling {#sec-datawrangle}
 
-In this case, data are coming from two separate sources, NeotomaDB for the historic pollen data, and the North American Modern Pollen Database (NAMPD; @whitmore2005) for both the modern pollen and modern climate variables. These three datasets (Historic pollen, modern pollen, and modern climate data) are required for the MAT. To implement the MAT, the two pollen datasets must contain the same taxa and have identical names for each taxon. Some of the data wrangling required to get two matrices containing the same taxa with identical names for the correct region (as required by the MAT function) is fairly advanced. This type of wrangling is quite common in palaeoecological data-science as you may be dealing with, for example, raw data collected by individuals, or from different databases that are stored in inconsistent formats.
+In this case, data are coming from two separate sources, NeotomaDB for the fossil pollen data, and the North American Modern Pollen Database (NAMPD; @whitmore2005) for both the modern pollen and modern climate variables. These three datasets (fossil pollen, modern pollen, and modern climate data) are required for the MAT. To implement the MAT, the two pollen datasets must contain the same taxa and have identical names for each taxon. Some of the data wrangling required to get two matrices containing the same taxa with identical names for the correct region (as required by the MAT function) is fairly advanced. This type of wrangling, called taxonomic name harmonization, is quite common in palaeoecological data science, because one frequently is dealing with, for example, primary datasets collected by different individuals, or data compiled in different databases that are stored in inconsistent formats or with different taxonomic backbones.
 
 Ready to wrangle? Let’s get the data ready:
 
@@ -97,20 +97,20 @@ if (!file.exists("./data/devils_dl.rds")) {
 
 :::
 
-The download holds everything Neotoma has for the site. `samples()` pulls the counts out of it, and does that **locally**: the API was contacted by `get_downloads()` above, not here. We keep pollen counted as numbers of grains, from the ecological groups this analysis is about.
+The download holds everything Neotoma has for the site. The function `samples()` pulls the counts out of it, and does that **locally**: the API was contacted by `get_downloads()` above, not here. We keep pollen counted as numbers of grains, focusing on terrestrial, rather than aquatic, plant taxa.
 
 ```{r devilsSamplesNa}
 devils_samples <- samples(devils_dl) %>%
-  dplyr::filter(ecologicalgroup %in% c("UPHE", "TRSH"), # upland herbs, trees and shrubs
+  dplyr::filter(ecologicalgroup %in% c("UPHE", "TRSH"), # select upland herbs, trees and shrubs
                 elementtype == "pollen",
                 units == "NISP")                        # counts, not percentages
 
 dplyr::n_distinct(devils_samples$variablename)
 ```
 
-Note that in the above code **no** taxa have been aggregated, and no proportions calculated. Both happen later. The harmonisation table below expects Neotoma's own names, so lumping *Pinus* here, as @sec-dissimilarity does for its single-site analysis, would leave the table unable to match any of the three pine taxa Devil's Lake actually records. And proportions are best calculated after dropping taxa, to avoid re-calculating.
+Note that, in the above code, no taxa have been aggregated and no proportions calculated. Both happen later. The harmonisation table below expects names from Neotoma's lists, so lumping *Pinus* here, as @sec-dissimilarity does for its single-site analysis, would leave the table unable to match any of the three pine taxa Devil's Lake actually records. Proportions are best calculated after dropping taxa, to avoid re-calculating.
 
-We will use the North American Modern Pollen Database (NAMPD) to create modern analogues [@whitmore2005]. The NAMPD includes both modern surface pollen samples and climate measurements. It is not (yet) accessible through Neotoma, but a copy is saved in the data directory of this book, so we can read it from there. It is always good to keep your own copy of data you depend on: servers are not maintained forever, and datasets are sometimes revised or withdrawn.
+We will use the North American Modern Pollen Database (NAMPD) as the reference dataset from which modern analogues will be found for fossil pollen samples [@whitmore2005]. The NAMPD includes both modern surface pollen samples and climate measurements. It is not (yet) accessible through Neotoma, but a copy is saved in the data directory of this book, so we can read it from there. It is always good to keep your own copy of critical data: servers are not maintained forever, and datasets are sometimes revised or withdrawn.
 
 ```{r readWhitmore}
 #| warning: false
@@ -121,11 +121,11 @@ mod_clim <- read_csv("./data/nampd-climate.csv", show_col_types = FALSE)
 
 Great! Now we have our three datasets:
 
-1. Our site of interest (Devil's Lake palaeo data).
+1. Our site of interest (Devil's Lake fossil pollen data).
 2. Our modern pollen data.
 3. Our modern climate measurements.
 
-The modern datasets include the whole of North America and need to be filtered for the Eastern US so that the taxa are relevant to those in Devil's Lake. We're first going to filter by longitude, then select by taxa so that we have a matching matrix of species between Devil's Lake palaeo-data and the modern surface samples from the NAMPD. We are going to keep all data East of 105°W, see @krause2019 and @williams2001 for details.
+The modern datasets include the whole of North America and need to be filtered for the eastern US so that the taxa are relevant to those in Devil's Lake (many genera, such as pine, oak, hemlock, have very different species in the eastern and western US). To do this, we'll first filter by longitude (keeping all data east of 105°W, see @krause2019 and @williams2001 for details), then select by taxa so that we have a matching matrix of species between the Devil's Lake fossil pollen dataset and the modern surface samples from the NAMPD. 
 
 
 ```{r wrangle}
@@ -137,7 +137,8 @@ mod_pol_east <- mod_pol %>%
   select(ID2, ABIES:XANTHIUM)   # ID2 plus the 134 taxon columns
 
 # The site names and coordinates are dropped by that select(), so keep a small
-# lookup table. We need it later to identify particular samples by name.
+# lookup table with this information. We'll need it later to identify particular
+# samples by name.
 mod_sites <- mod_pol %>%
   select(ID2, SITENAME, LATDD, LONDD)
 
@@ -154,16 +155,16 @@ mod_clim_filter <- mod_clim %>%
 ### Harmonising the taxon names {#sec-harmonisation}
 
 Now the tricky part. The two datasets do not use the same taxon names, and they do not
-identify pollen to the same taxonomic level. We have provided a harmonisation table that accounts for the differences between the two datasets to help with creating the matching historic/modern pollen matrices necessary for the MAT. Creating harmonisation tables that account for naming conventions and taxonomic resolution can be a big job, here are some examples of the challenges of matching databases:
+identify pollen to the same taxonomic level. We have provided a harmonisation table that accounts for the differences between the two datasets, which we will use to create the matching historic/modern pollen matrices necessary for the MAT. Creating harmonisation tables that account for naming conventions and taxonomic resolution can be a big job that requires some taxonomic expertise and knowledge of palynology.  Here are some examples of the challenges of matching databases:
 
-- Devil's Lake records *Picea* (spruce) to the species-level. The NAMPD splits *Picea* across three columns, `PICEAX` (i.e., undifferentiated, genus-level), `PICGLAUC` (*P. glauca*) and `PICMARIA` (*P. mariana*).
-- Devil's Lake records *Rhus*. The NAMPD has no *Rhus* column at all, but it does have
-  `ANACARDI`, the family *Rhus* belongs to. The two names share no letters, making them hard to find.
+- Devil's Lake records *Picea* (spruce) to the genus level. The NAMPD splits *Picea* across three columns, `PICEAX` (i.e., undifferentiated, genus-level), `PICGLAUC` (*P. glauca*, white spruce) and `PICMARIA` (*P. mariana*, black spruce).
+- Devil's Lake records *Rhus*. The NAMPD has no column for the *Rhus* genus, but it does have
+  `ANACARDI`, which is the family for *Rhus*. The two names share no letters, making them hard to find through simple text searches.
 - Devil's Lake records *Sarcobatus vermiculatus* to the species-level. The NAMPD has *Sarcobatus* to the genus-level.
 - The NAMPD's `RHAMNACEAE` column is not only Rhamnaceae. Its metadata says it combines
   Rhamnaceae with Vitaceae.
 
-Before the MAT can compare the two pollen datasets, every taxon must have the same naming convention down to the case! Although we have provided a table to crossreference databases, if you need to do this procedure for your own data, several decisions must be made along the way, which do not necessarily have a _right_ answer. Here are some examples of challenges we faced:
+Before the MAT can compare the two pollen datasets, every taxon must have exactly the same naming convention, down to the case! Although we have provided a harmonization table for this example, if you need to do this procedure for your own data, several decisions must be made along the way, which do not necessarily have a _right_ answer. Here are some examples of challenges we faced:
 
 
 1. **What are the dataset's naming conventions?** In the NAMPD a trailing `X`
@@ -171,19 +172,16 @@ Before the MAT can compare the two pollen datasets, every taxon must have the sa
    But the genus names `RUMEX` and `SALIX` also end in `X` and do not indicate undifferentiated taxa. The convention is documented in the workbook's `METADATA` sheet, and reading it is more reliable than inferring it from the codes.
 
 2. **Which taxa in which dataset have a finer taxonomic resolution and how do you handle it?**
-   *Picea* the NAMPD has a finer taxonomic resolution than Devil's Lake, so we summed the pollen counts to match the broader taxonomic resolution of Devil's Lake. For *Sarcobatus* Devil's Lake
-   has a finer taxonomic resolution, so we aggregated *Sarcobatus* to the genus level at Devil's Lake to match the NAMPD data.
+   Usually by aggregating to the coarser-resolution taxonomic level.  *Picea* in the NAMPD has a finer taxonomic resolution than Devil's Lake, so we summed the pollen counts to match the broader taxonomic resolution of Devil's Lake. For *Sarcobatus* Devil's Lake has a finer taxonomic resolution, so we aggregated *Sarcobatus* to the genus level at Devil's Lake to match the NAMPD data.  
 
 3. **What happens when no name match exists?** In some cases, the family-level was recorded but not the  genus- or species- level, for example, *Rhus* matches to the Anacardiaceae family, *Ilex* to Aquifoliaceae   family, and *Morus* to Moraceae family. These are particularly tricky to track down!
 
 4. **What do you do with taxa that have no counterpart?** Devil's Lake records
    `Cannabaceae sensu stricto`, and the NAMPD has no Cannabaceae column, so those counts are
    discarded. `Angiospermae undiff. (herbs)` is unidentified herbaceous pollen with no
-   equivalent, so it goes too. Both are decisions to record rather than problems to solve. It is important to note how impactful removing taxa is to the whole dataset.
+   equivalent, so it goes too. Both are decisions to record rather than problems to solve. Note that removing taxa can have big effects; one is removing ecological signal, so do this cautiously and carefully, and document one's decisions!
 
-An important point to note is that a name-matching algorithm cannot make ecological
-decisions, and can entirely miss issues like *Rhus* matching to the Anacardiaceae family.
-Thus, harmonisation tables, like the one below, require substantial curation!
+Note that a simple name-matching algorithm cannot make ecological decisions, and can entirely miss issues like *Rhus* matching to the Anacardiaceae family. Thus, harmonisation tables, like the one below, require thoughtful curation!
 
 ### Matching taxa with the harmonisation table
 
@@ -259,7 +257,7 @@ devils_ages <- devils_harm$age
 mod_ids     <- mod_pol_harm$ID2
 
 # The climate data must line up row for row with the modern pollen, and the
-# MAT will not warn you if they do not. In this dataset they already match, but
+# MAT will not warn you if they do not. In this dataset, they already match, but
 # only because the 94 rows with a missing ID2 also have a missing longitude and
 # are removed by the eastern filter. Do not rely on that: sort explicitly and
 # then check.
@@ -291,8 +289,11 @@ tibble(
   mutate(pct_kept = round(100 * grains_after / grains_before, 2))
 ```
 
-This is pretty good! We kept almost all of the taxa present in Devil's Lake, only two of its taxa had no counterpart. The reduction of species in the NAMPD is no surprise given that the data cover the entire eastern U.S. It is also worth seeing which taxa the aggregation changed most, since that is where the
-harmonisation had the largest effect on the modern data:
+This is pretty good! We kept almost all of the taxa present in Devil's Lake, only two of its taxa had no counterpart. The reduction of species in the NAMPD is no surprise given that the data cover the entire eastern U.S. 
+
+Note that here we have forced the two datasets to have exactly the same set of taxa names by dropping taxa not found in both datasets (after harmonizing for genus- vs. family-level names, etc.).  Another valid option could have been to add columns to Devils Lake for taxa found only in the NAMPD and insert zeros for all values.  This solution assumes that these taxon were truly absent from Devil's Lake, i.e. they would have been recorded by the original pollen analyst if present at detectable levels.  Clearly this is a big assumption, so think carefully before making it!  But, it can make a lot of sense for, e.g. regionally and climatically restricted taxa, such as *Nyssa* (tupelo), which is found only in the warm and humid climates of the southeastern US (SEUS).  Keeping *Nyssa* in the analysis would improve the inferential power of the MAT, because SEUS sites with a lot of *Nyssa* (and presumably from warm/humid climates) would tend to have a higher dissimilarity to the Devil's Lake samples.  With *Nyssa* removed, that information is lost.
+
+It is also worth seeing which taxa the aggregation changed most, since that is where the harmonisation had the largest effect on the modern data:
 
 ```{r rollupEffect}
 harmonisation %>%
@@ -330,10 +331,10 @@ nampd_meta <- read_csv("./data/nampd-metadata.csv", skip = 41,
 
 #### Converting to proportions
 
-So far, we have been dealing with raw count data but, for the MAT, we need to convert to proportions, and the order matters. Squared chord distance is not
-scale invariant, so if the rows do sum to one the two datasets are not comparable: a
+So far, we have been dealing with raw count data but, for the MAT, we need to convert to proportions, and the order of operations matters. Squared chord distance is not
+scale invariant, so if the rows do not sum to one the two datasets are not comparable: a
 fossil sample whose remaining taxa add up to 0.6 would look artificially far from every modern
-sample. Dividing before dropping columns is a common and quiet way to get this wrong, but `rowSums()` provides an easy check!
+sample. Calculating proportions before dropping columns is a common and quiet way to get this wrong, but `rowSums()` provides an easy check!
 
 ```{r proportionsHarmonised}
 # Take care that you do not accidentally include an age or depth column
@@ -346,7 +347,7 @@ range(rowSums(mod_pol_harm))
 range(rowSums(devils_harm))
 ```
 
-That is the end of the wrangling. Everything the analysis needs is now in RAM, so we save it to disk in one object. We keep all necessary data saved so that all the resources you need exist offline and no API calls are needed to the Neotoma DB (which occasionally undergoes maintenance).
+That is the end of the wrangling. Everything the analysis needs is now in RAM, so we save it to disk in one object. We keep all necessary data saved so that all the resources you need exist offline and no API calls are needed to the Neotoma DB (which occasionally undergoes maintenance, gets overloaded by sloppy bot routines, etc.).
 
 ```{r saveWrangled}
 #| output: false
@@ -369,9 +370,9 @@ Now that we have the data we need, and in the format that we need it, we can app
 
 ### Cross-validation {#sec-crossvalid}
 
-The Modern Analogue Technique needs the same set of taxa in the modern dataset and in the historic pollen data. In @sec-harmonisation we produced: two matrices, `mod_pol_harm` and `devils_harm`, with identical columns names (taxa names) and rows that sum to one (relative abundances rather than raw pollen counts). Before reconstructing environmental variables from fossil pollen assemblages, we usually assess how MAT performs in the modern species assemblage. This step is usually referred to as calibration or cross-validation.
+The Modern Analogue Technique needs the same set of taxa in the modern dataset and in the historic pollen data. In @sec-harmonisation we produced: two matrices, `mod_pol_harm` and `devils_harm`, with identical columns names (taxa names) and rows that sum to one (relative abundances rather than raw pollen counts). Before reconstructing environmental variables from fossil pollen assemblages, we usually assess how MAT performs in the modern species assemblage. This step is usually referred to as cross-validation.
 
-In cross-validation, a calibration function is trained on one portion of the modern species assemblages (calibration set) and applied to another portion of the modern species assemblages (validation set). These two datasets are thus mutually exclusive and, possibly, independent. To cross-validate MAT, we usually use a technique called $k$-fold cross-validation. In $k$-fold cross-validation the modern dataset is split into $k$ mutually exclusive subsets. For each $k^{th}$ subset, the calibration dataset comprises all the samples not in $k$, while the samples in $k$ comprise the validation dataset. The simplest form of $k$-fold cross-validation is the leave-one-out (LOO) technique, in which just a single sample is removed and then all other samples are used to build a prediction for that sample. This procedure is then repeated for all samples. The `analogue` package uses leave-one-out cross-validation. To assess the model, we can use standard metrics including root mean square error (RMSE) and $R^2$. Here, we’ll use the cross-validation tools built into the analogue package.
+In cross-validation, a calibration function is trained on one portion of the modern species assemblages (calibration set) then applied to another portion of the modern species assemblages (validation set). These two datasets are thus mutually exclusive and, possibly, independent. To cross-validate MAT, we usually use a technique called $k$-fold cross-validation. In $k$-fold cross-validation the modern dataset is split into $k$ mutually exclusive subsets. For each $k^{th}$ subset, the calibration dataset comprises all the samples not in $k$, while the samples in $k$ comprise the validation dataset. The simplest form of $k$-fold cross-validation is the leave-one-out (LOO) technique, in which just a single sample is removed and then all other samples are used to build a prediction for that sample. This procedure is then repeated for all samples. The `analogue` package uses leave-one-out cross-validation. To assess the model, we can use standard metrics of model fit, including root mean square error (RMSE) and $R^2$. Here, we’ll use the cross-validation tools built into the analogue package.
 
 Note that the `palaeoSig` package, developed by Richard Telford, has additional functions that can test for significance relative to randomly generated variables with the same spatial structure as the environmental variable of interest. We won’t use this package in this chapter, but it’s useful for testing whether apparently strong cross-validation results are merely an artefact of spatial autocorrelation [@telford2005].
 
@@ -506,7 +507,7 @@ plot(modpoll_jant)
 ::: {#exr-choosing-k}
 The summary for `modpoll_jant` reports RMSEP, $R^2$ and bias for every $k$ from 1 to 10, and the reconstruction later in this chapter is built with `k = 10`.
 
-1. Read off the $k$ that minimises RMSEP, once for the mean and once for the weighted mean. Does the same $k$ win in both cases?
+1. Find the $k$ that minimises RMSEP, once for the mean and once for the weighted mean. Does the same $k$ win in both cases?
 
 2. Rebuild the reconstruction with the $k$ you chose, using `predict(modpoll_jant, devils_harm, k = ...)`, and plot it against the `k = 10` version. How much does the choice actually change the reconstructed temperatures?
 
@@ -579,6 +580,17 @@ reconPlot(devil_jant, depth = devils_ages, display.error = "bars",
 
 :::
 
+::: {#exr-noanalog-questions}
+Now let's do some ecological thinking about the above outputs:
+
+1. Check the Devil's Lake novelty curve against the pollen diagram for Devil's Lake, either using your results from earlier in this semester, a visualization in Neotoma, or the original publication.  What combinations of pollen taxa produce these assemblages with no modern analogue?  
+
+2. According to Webb (1986), what are two general hypotheses for why we might have past mixtures of species with no modern analogue?
+
+3. Why should one be dubious about the temperature reconstructions at Devil's Lake for the high-novelty assemblages?
+
+4. Conversely, based on our knowledge about the geographic and climatic distributions of the taxa found in the high-novelty assemblages, why might one argue that these January temperature reconstructions are plausible?
+:::
 
 ::: {#exr-nearby-site}
 Devil's Lake is a single record. A reconstruction is far more convincing if a nearby site tells the same story.
@@ -610,4 +622,5 @@ The exercises take that further, and are worth returning to if you skipped them:
 - @exr-pollen-or-spore, what the harmonisation actually discarded
 - @exr-choosing-k, how many analogues to average over
 - @exr-climate-variables, and which aspects of climate pollen can actually predict
+- @exr-noanalog-questions, ecological and climatic interpretation of no-analog assemblages
 - @exr-nearby-site, applying the whole workflow to a second record
